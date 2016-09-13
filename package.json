@@ -1,5 +1,5 @@
 {
-  "name": "nodejs-globe-elevation",
+  "name": "globe-elevation",
   "version": "1.0.0",
   "description": "NodeJS module to retrieve elevation from \"Global Land One-km Base Elevation Project\"",
   "main": "index.js",
