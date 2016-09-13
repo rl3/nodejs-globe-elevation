@@ -234,4 +234,4 @@ var getElevation= function( location ) {
 };
 
 
-exports.getElevation= getElevation;
+module.exports.getElevation= getElevation;
