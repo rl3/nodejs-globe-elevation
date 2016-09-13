@@ -15,7 +15,7 @@ var dataPath= 'elevation';
  */
 var fileOpenTimeout= 3600000;
 
-exports= {
+module.exports= {
     dataPath: dataPath,
     fileOpenTimeout: fileOpenTimeout,
 };
