@@ -81,7 +81,7 @@ var _resolveValue= function( value ) {
     if ( typeof value === 'function' ) return _resolveValue(value());
 
     return value;
-}
+};
 
 var _fixObjectLocation= function( location ) {
     if ( typeof location === 'object' && 'lng' in location && 'lat' in location ) {
@@ -92,7 +92,7 @@ var _fixObjectLocation= function( location ) {
 
         return [ lng, lat ];
     }
-}
+};
 
 
 var _fixSingleLocation= function( location ) {
@@ -105,7 +105,7 @@ var _fixSingleLocation= function( location ) {
         return [ lng, lat ];
     }
     return _fixObjectLocation(location);
-}
+};
 
 var _fixLocation= function( location ) {
     location= _resolveValue(location);
@@ -120,7 +120,7 @@ var _fixLocation= function( location ) {
     var ul= _fixSingleLocation(location[0]);
     var or= _fixSingleLocation(location[1]);
     if ( ul && or ) return [ ul, or ];
-}
+};
 
 
 var getElevation= function( location, onError ) {
@@ -192,7 +192,7 @@ var init= function( config ) {
     var result= dataFiles.init(config);
     if ( result instanceof Error ) throw result;
     return result;
-}
+};
 
 
 module.exports= {

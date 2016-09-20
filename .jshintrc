@@ -4,7 +4,7 @@
     "laxbreak": true,
     "laxcomma": true,
     "predef": [
-        "require", "exports", "process", "console", "setTimeout", "clearTimeout", "__dirname",
+        "require", "module", "process", "console", "setTimeout", "clearTimeout", "__dirname",
         "Buffer"
     ],
     "sub": true,
