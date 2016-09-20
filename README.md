@@ -21,18 +21,18 @@ You may provide any other directory on initializiation.
 
 # Installation
 Simply install this module with `npm`
-```
+```sh
 npm install globe-elevation
 ```
 
 To install it globally run
-```
+```sh
 npm install -g globe-elevation
 ```
 
 
 # Usage
-```
+```js
 'use strict';
 var elevation= require('globe-elevation');
 elevation.init({
