@@ -5,9 +5,6 @@ var util= require('util');
 
 var elevation= require('./index');
 
-elevation.init({
-    dataPath: '/var/node/Sponge-JS/elevation',
-});
 
 var round= function( value ) {
     return Math.round(value * 100) / 100;
@@ -34,6 +31,8 @@ test([ [ () => -106.5, () => 35.1 ], { lat: 35.0, lng: -106.6 } ], 1632.24);
 test([ { lat: () => 35.0, lng: () => -106.6 }, [ () => () => -106.5, () => 35.1 ] ], 1632.24);
 test([ () => { return { lat: () => 35.0, lng: () => -106.6 }; }, [ () => () => -106.5, () => 35.1 ] ], 1632.24);
 test(() => [ () => { return { lat: () => 35.0, lng: () => -106.6 }; }, [ () => () => -106.5, () => 35.1 ] ], 1632.24);
+
+test([ { lat: 67.5, lng: -179 }, [ 179, 68 ] ], 513.1);
 
 test([ -68.00833333, -25.62500000 ], 5303);
 test([ -68.00833334, -25.62500001 ], 5345);
