@@ -9,7 +9,7 @@ Project's Homepage: http://www.ngdc.noaa.gov/mgg/topo/globe.html
 Load GLOBE's data here: https://www.ngdc.noaa.gov/mgg/topo/gltiles.html
 
 Please download and extract GLOBE's files to a directory.
-This modules searches for data files in the folowing paths:
+This module searches for data files in the folowing paths:
 ```
 /usr/share/GLOBE-elevation
 /usr/share/local/GLOBE-elevation
