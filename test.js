@@ -3,7 +3,6 @@
 'use strict';
 
 var elevation= require('./index');
-var util= require('util');
 
 elevation.init({
     dataPath: '/var/node/Sponge-JS/elevation',
@@ -11,7 +10,7 @@ elevation.init({
 
 var round= function( value ) {
     return Math.round(value * 100) / 100;
-}
+};
 
 var test= function( description, expectedResult, result ) {
     var success= round(expectedResult) === round(result);
@@ -20,7 +19,7 @@ var test= function( description, expectedResult, result ) {
         return true;
     }
     console.error('FAIL:', description, 'expected', expectedResult, 'got', result);
-}
+};
 
 
 
