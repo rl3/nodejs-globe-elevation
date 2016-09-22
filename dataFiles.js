@@ -16,23 +16,30 @@ var fs= require('fs');
  * Digital data base on the World Wide Web (URL: http://www.ngdc.noaa.gov/mgg/topo/globe.html) and CD-ROMs.
  */
 var dataFiles= [
-    { name: 'a10g', latMin:    50, latMax:     90, lonMin:   -180, lonMax:    -90, elMin:      1, elMax:    6098, columns:    10800, rows:   4800 },
-    { name: 'b10g', latMin:    50, latMax:     90, lonMin:    -90, lonMax:      0, elMin:      1, elMax:    3940, columns:    10800, rows:   4800 },
-    { name: 'c10g', latMin:    50, latMax:     90, lonMin:      0, lonMax:     90, elMin:    -30, elMax:    4010, columns:    10800, rows:   4800 },
-    { name: 'd10g', latMin:    50, latMax:     90, lonMin:     90, lonMax:    180, elMin:      1, elMax:    4588, columns:    10800, rows:   4800 },
-    { name: 'e10g', latMin:     0, latMax:     50, lonMin:   -180, lonMax:    -90, elMin:    -84, elMax:    5443, columns:    10800, rows:   6000 },
-    { name: 'f10g', latMin:     0, latMax:     50, lonMin:    -90, lonMax:      0, elMin:    -40, elMax:    6085, columns:    10800, rows:   6000 },
-    { name: 'g10g', latMin:     0, latMax:     50, lonMin:      0, lonMax:     90, elMin:   -407, elMax:    8752, columns:    10800, rows:   6000 },
-    { name: 'h10g', latMin:     0, latMax:     50, lonMin:     90, lonMax:    180, elMin:    -63, elMax:    7491, columns:    10800, rows:   6000 },
-    { name: 'i10g', latMin:   -50, latMax:      0, lonMin:   -180, lonMax:    -90, elMin:      1, elMax:    2732, columns:    10800, rows:   6000 },
-    { name: 'j10g', latMin:   -50, latMax:      0, lonMin:    -90, lonMax:      0, elMin:   -127, elMax:    6798, columns:    10800, rows:   6000 },
-    { name: 'k10g', latMin:   -50, latMax:      0, lonMin:      0, lonMax:     90, elMin:      1, elMax:    5825, columns:    10800, rows:   6000 },
-    { name: 'l10g', latMin:   -50, latMax:      0, lonMin:     90, lonMax:    180, elMin:      1, elMax:    5179, columns:    10800, rows:   6000 },
-    { name: 'm10g', latMin:   -90, latMax:    -50, lonMin:   -180, lonMax:    -90, elMin:      1, elMax:    4009, columns:    10800, rows:   4800 },
-    { name: 'n10g', latMin:   -90, latMax:    -50, lonMin:    -90, lonMax:      0, elMin:      1, elMax:    4743, columns:    10800, rows:   4800 },
-    { name: 'o10g', latMin:   -90, latMax:    -50, lonMin:      0, lonMax:     90, elMin:      1, elMax:    4039, columns:    10800, rows:   4800 },
-    { name: 'p10g', latMin:   -90, latMax:    -50, lonMin:     90, lonMax:    180, elMin:      1, elMax:    4363, columns:    10800, rows:   4800 },
+    { name: 'a10g', latMin:    50, latMax:     90, lngMin:   -180, lngMax:    -90, elMin:      1, elMax:    6098, columns:    10800, rows:   4800 },
+    { name: 'b10g', latMin:    50, latMax:     90, lngMin:    -90, lngMax:      0, elMin:      1, elMax:    3940, columns:    10800, rows:   4800 },
+    { name: 'c10g', latMin:    50, latMax:     90, lngMin:      0, lngMax:     90, elMin:    -30, elMax:    4010, columns:    10800, rows:   4800 },
+    { name: 'd10g', latMin:    50, latMax:     90, lngMin:     90, lngMax:    180, elMin:      1, elMax:    4588, columns:    10800, rows:   4800 },
+    { name: 'e10g', latMin:     0, latMax:     50, lngMin:   -180, lngMax:    -90, elMin:    -84, elMax:    5443, columns:    10800, rows:   6000 },
+    { name: 'f10g', latMin:     0, latMax:     50, lngMin:    -90, lngMax:      0, elMin:    -40, elMax:    6085, columns:    10800, rows:   6000 },
+    { name: 'g10g', latMin:     0, latMax:     50, lngMin:      0, lngMax:     90, elMin:   -407, elMax:    8752, columns:    10800, rows:   6000 },
+    { name: 'h10g', latMin:     0, latMax:     50, lngMin:     90, lngMax:    180, elMin:    -63, elMax:    7491, columns:    10800, rows:   6000 },
+    { name: 'i10g', latMin:   -50, latMax:      0, lngMin:   -180, lngMax:    -90, elMin:      1, elMax:    2732, columns:    10800, rows:   6000 },
+    { name: 'j10g', latMin:   -50, latMax:      0, lngMin:    -90, lngMax:      0, elMin:   -127, elMax:    6798, columns:    10800, rows:   6000 },
+    { name: 'k10g', latMin:   -50, latMax:      0, lngMin:      0, lngMax:     90, elMin:      1, elMax:    5825, columns:    10800, rows:   6000 },
+    { name: 'l10g', latMin:   -50, latMax:      0, lngMin:     90, lngMax:    180, elMin:      1, elMax:    5179, columns:    10800, rows:   6000 },
+    { name: 'm10g', latMin:   -90, latMax:    -50, lngMin:   -180, lngMax:    -90, elMin:      1, elMax:    4009, columns:    10800, rows:   4800 },
+    { name: 'n10g', latMin:   -90, latMax:    -50, lngMin:    -90, lngMax:      0, elMin:      1, elMax:    4743, columns:    10800, rows:   4800 },
+    { name: 'o10g', latMin:   -90, latMax:    -50, lngMin:      0, lngMax:     90, elMin:      1, elMax:    4039, columns:    10800, rows:   4800 },
+    { name: 'p10g', latMin:   -90, latMax:    -50, lngMin:     90, lngMax:    180, elMin:      1, elMax:    4363, columns:    10800, rows:   4800 },
 ];
+
+// resolution in 1 / degree
+var resolution= 120;
+
+/**
+ *  End of constants
+ */
 
 /**
  * Base path for data files
@@ -144,33 +151,73 @@ var init= function( config ) {
     return result;
 };
 
-var fileIndex= function( location, fileEntry, resolution ) {
-    var column= Math.floor(location[0] * resolution);
-    var row= Math.floor(location[1] * resolution);
+var finalize= closeAllFiles;
+
+var fileIndex= function( lng, lat, fileEntry, resolution ) {
+    var column= Math.floor(lng * resolution);
+    var row= Math.floor(lat * resolution);
 
     var rowIndex= row - fileEntry.latMin * resolution;
-    var columnIndex= column - fileEntry.lonMin * resolution;
+    var columnIndex= column - fileEntry.lngMin * resolution;
     var index= ((fileEntry.rows - rowIndex - 1) * fileEntry.columns + columnIndex) * 2;
     return index;
 };
 
 
-var findFile= function( location ) {
+var findFile= function( lng, lat ) {
     for ( var i in dataFiles ) {
         var df= dataFiles[i];
-        if (df.latMin <= location[1] && df.latMax >= location[1] && df.lonMin <= location[0] && df.lonMax >= location[0]) {
+        if (df.latMin <= lat && df.latMax > lat && df.lngMin <= lng && df.lngMax > lng) {
             return df;
         }
     }
 };
 
+/**
+ * Reads a number from given file
+ */
+var readNumberFromFile= (function() {
+    var buffer= new Buffer(2);
+
+    return function( name, position ) {
+
+        return openFile(name, function( fd ) {
+            if ( fs.readSync(fd, buffer, 0, 2, position) !== 2 ) return null;
+
+            var int16= buffer.readInt16LE(0);
+
+            // return 0 for oceans
+            return int16 === -500 ? 0 : int16;
+        });
+    };
+})();
+
+
+/**
+ *  Get elevation of a given lng/lat
+ *  returns undefined (or result of onError) on error
+ *  returns elevation otherwise
+ */
+var nop= function() {};
+var getElevation= function( lng, lat, onError ) {
+    if ( !onError ) onError= nop;
+
+    var fileEntry= findFile(lng, lat);
+
+    if ( !fileEntry ) return onError('Could not determine data file');
+
+    var result= readNumberFromFile(fileEntry.name, fileIndex(lng, lat, fileEntry, resolution));
+
+    if ( isNaN(result) ) return onError('Could not fetch value from file');
+
+    return result;
+};
+
 
 module.exports= {
     init: init,
-    openFile: function() {
-        return openFile.apply(undefined, arguments);
-    },
-    findFile: findFile,
-    fileIndex: fileIndex,
+    getElevation: getElevation,
+    getResolution: function() { return resolution; },
+    finalize: finalize
 };
 

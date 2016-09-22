@@ -1,6 +1,4 @@
 'use strict';
-var fs= require('fs');
-
 var dataFiles= require('./dataFiles');
 
 var defaultDataPaths= [
@@ -10,19 +8,13 @@ var defaultDataPaths= [
     'elevation',
 ];
 
-// resolution in 1 / degree
-var resolution= 120;
+var resolution= dataFiles.getResolution();
 var resolutionStep= 1 / resolution;
 
 // offset to middle of one raster pixel
 var offset= resolutionStep / 2;
 
-// limit of single points for bounding boxes
-var pointLimit= 1e6;
-
-/**
- * End of constants
- */
+var autoFinalize= true;
 
 // First initialization with best guessed values
 dataFiles.init({
@@ -42,12 +34,27 @@ var _mirrorLng= function( lng ) {
 };
 
 /**
+ *  convert a coordinate to integer
+ */
+var coord2Int= function( c ) {
+    return Math.round((c + offset) * resolution);
+};
+
+/**
+ *  convert an integer to coordinate
+ */
+var int2Coord= function( i ) {
+    return i / resolution - offset;
+};
+
+
+/**
  *  Lng/lat coordinate
  */
 var Point= (function() {
-    var _maxLat= 90 - offset;
+    var _maxLat= 90 - resolutionStep / 2;
     var _round= function( l ) {
-        return Math.round((l + offset) * resolution) / resolution - offset;
+        return int2Coord(coord2Int(l));
     };
 
     return function( lng, lat ) {
@@ -55,15 +62,16 @@ var Point= (function() {
             lat= lng[1];
             lng= lng[0];
         }
+        lng= _round(lng);
+        lat= _round(lat);
 
         if ( lat < -_maxLat ) lat= -_maxLat;
         if ( lat >  _maxLat ) lat=  _maxLat;
         if ( lng < -180) lng += 360;
-        if ( lng >  180) lg -= 360;
+        if ( lng >  180) lng -= 360;
 
         this.lng= function() { return lng; };
         this.lat= function() { return lat; };
-        this.round= function() { return new Point(_round(lng), _round(lat)); };
     };
 })();
 
@@ -77,7 +85,7 @@ var BoundingBox= function( p1, p2 ) {
     var sphereWrap= p1Lng * p2Lng < 0 && Math.abs(p1Lng - p2Lng) >= 180;
     if ( sphereWrap ) {
         p1Lng= _mirrorLng(p1Lng);
-        p12ng= _mirrorLng(p2Lng);
+        p2Lng= _mirrorLng(p2Lng);
     }
 
     var minLng= Math.min(p1Lng, p2Lng);
@@ -90,26 +98,7 @@ var BoundingBox= function( p1, p2 ) {
     this.minLat= function() { return minLat; };
     this.maxLat= function() { return maxLat; };
     this.sphereWrap= function() { return sphereWrap; };
-}
-
-
-/**
- * Reads a number from given file
- */
-var readNumberFromFile= (function() {
-    var buffer= new Buffer(2);
-
-    return function( name, position ) {
-        return dataFiles.openFile(name, function( fd ) {
-            if ( fs.readSync(fd, buffer, 0, 2, position) !== 2 ) return null;
-
-            var int16= buffer.readInt16LE(0);
-
-            // return 0 for oceans
-            return int16 === -500 ? 0 : int16;
-        });
-    };
-})();
+};
 
 
 /**
@@ -172,56 +161,60 @@ var _fixParam= (function() {
  *
  *  returns result of onError or elevation
  */
-var getElevation= function( param, onError ) {
+var _getElevation= function( param, onError ) {
     if ( typeof onError !== 'function' ) onError= function() {};
 
     param= _fixParam(param);
     if ( !param ) return onError('Could get location');
 
-    var locations;
-    if ( param instanceof BoundingBox ) {
-        locations= [];
-
-        var maxLng= param.maxLng();
-        var maxLat= param.maxLat();
-        var sphereWrap= param.sphereWrap();
-
-        // boundingBox assumed -> build locations array
-        for ( var lng= param.minLng(); lng <= maxLng; lng += resolutionStep ) {
-            for ( var lat= param.minLat(); lat <= maxLat; lat += resolutionStep ) {
-                locations.push([ sphereWrap ? _mirrorLng(lng) : lng, lat ]);
-
-                // prevent system from lock up due to allocate a lot of memory
-                if ( locations.length > pointLimit ) return onError('Too many points');
-            }
-        }
-    }
-    else {
-        locations= [ param.lng(), param.lat() ];
+    if ( param instanceof Point ) {
+        return dataFiles.getElevation(param.lng(), param.lat(), onError);
     }
 
+    var minIlng= coord2Int(param.minLng());
+    var maxIlng= coord2Int(param.maxLng());
+    var minIlat= coord2Int(param.minLat());
+    var maxIlat= coord2Int(param.maxLat());
+    var sphereWrap= param.sphereWrap();
 
     var altSum= 0;
-    for ( var i in locations ) {
-        var li= locations[i];
-        var fileEntry= dataFiles.findFile(li);
+    var count= 0;
 
-        if ( !fileEntry ) return onError('Could not determine data file');
+    var _error, _errorResult;
+    var _onError= function() {
+        _errorResult= onError.apply(undefined, arguments);
+        _error= true;
+        return 0;
+    };
 
-        var alt= readNumberFromFile(fileEntry.name, dataFiles.fileIndex(li, fileEntry, resolution));
+    for ( var iLng= minIlng; iLng <= maxIlng; iLng += 1 ) {
+        var lng= int2Coord(iLng);
+        if ( sphereWrap ) lng= _mirrorLng(lng);
 
-        if ( isNaN(alt) ) return onError('Could not fetch value from file');
+        for ( var iLat= minIlat; iLat <= maxIlat; iLat += 1 ) {
+            altSum += dataFiles.getElevation(lng, int2Coord(iLat), _onError);
 
-        altSum += alt;
+            if ( _error ) return _errorResult;
+
+            count++;
+        }
     }
 
-    return altSum / locations.length;
+    return altSum / count;
+};
+
+var getElevation= function( param, onError ) {
+    var result= _getElevation(param, onError);
+    if ( autoFinalize ) dataFiles.finalize();
+    return result;
 };
 
 var init= function( config ) {
     var result= dataFiles.init(config);
 
     if ( result instanceof Error ) throw result;
+
+    if ( 'autoFinalize' in config ) autoFinalize= config.autoFinalize;
 
     return result;
 };
