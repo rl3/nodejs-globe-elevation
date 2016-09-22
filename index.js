@@ -12,12 +12,13 @@ var defaultDataPaths= [
 
 // resolution in 1 / degree
 var resolution= 120;
+var resolutionStep= 1 / resolution;
 
 // offset to middle of one raster pixel
-var offset= 1 / (2 * resolution);
+var offset= resolutionStep / 2;
 
 // limit of single points for bounding boxes
-var pointLimit= 1000000;
+var pointLimit= 1e6;
 
 /**
  * End of constants
@@ -34,18 +35,62 @@ dataFiles.init({
 
 
 /**
- * correct point for bounding boxes crossing date line
+ *  mirror a Longitude
  */
-var mirrorPoint= function( point ) {
-    return [ point[0] + (point[0] < 0 ? 180 : -180), point[1] ];
+var _mirrorLng= function( lng ) {
+    return lng + (lng < 0 ? 180 : -180);
 };
 
 /**
- * correct list of points for bounding boxes crossing date line
+ *  Lng/lat coordinate
  */
-var mirrorPoints= function( points ) {
-    return points.map(mirrorPoint);
-};
+var Point= (function() {
+    var _maxLat= 90 - offset;
+    var _round= function( l ) {
+        return Math.round((l + offset) * resolution) / resolution - offset;
+    };
+
+    return function( lng, lat ) {
+        if ( Array.isArray(lng) ) {
+            lat= lng[1];
+            lng= lng[0];
+        }
+
+        if ( lat < -_maxLat ) lat= -_maxLat;
+        if ( lat >  _maxLat ) lat=  _maxLat;
+        if ( lng < -180) lng += 360;
+        if ( lng >  180) lg -= 360;
+
+        this.lng= function() { return lng; };
+        this.lat= function() { return lat; };
+        this.round= function() { return new Point(_round(lng), _round(lat)); };
+    };
+})();
+
+/**
+ *  Bounding box representation
+ */
+var BoundingBox= function( p1, p2 ) {
+    var p1Lng= p1.lng(), p1Lat= p1.lat(),
+        p2Lng= p2.lng(), p2Lat= p2.lat();
+
+    var sphereWrap= p1Lng * p2Lng < 0 && Math.abs(p1Lng - p2Lng) >= 180;
+    if ( sphereWrap ) {
+        p1Lng= _mirrorLng(p1Lng);
+        p12ng= _mirrorLng(p2Lng);
+    }
+
+    var minLng= Math.min(p1Lng, p2Lng);
+    var maxLng= Math.max(p1Lng, p2Lng);
+    var minLat= Math.min(p1Lat, p2Lat);
+    var maxLat= Math.max(p1Lat, p2Lat);
+
+    this.minLng= function() { return minLng; };
+    this.maxLng= function() { return maxLng; };
+    this.minLat= function() { return minLat; };
+    this.maxLat= function() { return maxLat; };
+    this.sphereWrap= function() { return sphereWrap; };
+}
 
 
 /**
@@ -67,114 +112,99 @@ var readNumberFromFile= (function() {
 })();
 
 
-var roundLocation= function( location ) {
-    var rlon= Math.round((location[0] + offset) * resolution) / resolution - offset;
-    var rlat= Math.round((location[1] + offset) * resolution) / resolution - offset;
-    rlat= Math.max(-90 + offset, rlat);
-    rlat= Math.min(90 - offset, rlat);
-    if (rlon < -180) rlon += 360;
-    if (rlon > 180) rlon -= 360;
-    return [ rlon, rlat ];
-};
+/**
+ *  parse parameters
+ *  returns Point, BoundingBox or undefined on error
+ */
+var _fixParam= (function() {
+    var _resolveValue= function( value ) {
+        if ( typeof value === 'function' ) return _resolveValue(value());
 
-var _resolveValue= function( value ) {
-    if ( typeof value === 'function' ) return _resolveValue(value());
+        return value;
+    };
 
-    return value;
-};
+    var _fixObjectLocation= function( location ) {
+        if ( typeof location === 'object' && 'lng' in location && 'lat' in location ) {
+            var lng= +_resolveValue(location.lng);
+            var lat= +_resolveValue(location.lat);
 
-var _fixObjectLocation= function( location ) {
-    if ( typeof location === 'object' && 'lng' in location && 'lat' in location ) {
-        var lng= +_resolveValue(location.lng);
-        var lat= +_resolveValue(location.lat);
+            if ( isNaN(lng) || isNaN(lat) ) return;
 
-        if ( isNaN(lng) || isNaN(lat) ) return;
+            return new Point(lng, lat);
+        }
+    };
 
-        return [ lng, lat ];
-    }
-};
+    var _fixSingleLocation= function( location ) {
+        if ( Array.isArray(location) && location.length === 2 ) {
+            var lng= +_resolveValue(location[0]);
+            var lat= +_resolveValue(location[1]);
 
+            if ( isNaN(lng) || isNaN(lat) ) return;
 
-var _fixSingleLocation= function( location ) {
-    if ( Array.isArray(location) && location.length === 2 ) {
-        var lng= +_resolveValue(location[0]);
-        var lat= +_resolveValue(location[1]);
+            return new Point(lng, lat);
+        }
+        return _fixObjectLocation(location);
+    };
 
-        if ( isNaN(lng) || isNaN(lat) ) return;
+    return function( location ) {
+        location= _resolveValue(location);
 
-        return [ lng, lat ];
-    }
-    return _fixObjectLocation(location);
-};
+        var p= _fixSingleLocation(location);
 
-var _fixLocation= function( location ) {
-    location= _resolveValue(location);
+        // location is a single location
+        if ( p ) return p;
 
-    var l= _fixSingleLocation(location);
+        if ( !Array.isArray(location) || location.length !== 2 ) return;
 
-    // location is a single location
-    if ( l ) return l;
+        var p1= _fixSingleLocation(location[0]);
+        var p2= _fixSingleLocation(location[1]);
 
-    if ( !Array.isArray(location) || location.length !== 2 ) return;
-
-    var ul= _fixSingleLocation(location[0]);
-    var or= _fixSingleLocation(location[1]);
-    if ( ul && or ) return [ ul, or ];
-};
+        if ( p1 && p2 ) return new BoundingBox(p1, p2);
+    };
+})();
 
 
-var getElevation= function( location, onError ) {
+/**
+ *  get elevation
+ *  param may be a single location of either [lng, lat] or {lng: lng, lat: lat}
+ *      or to locations of the above form, defining a bounding box
+ *  onError is optional and is called on error
+ *
+ *  returns result of onError or elevation
+ */
+var getElevation= function( param, onError ) {
     if ( typeof onError !== 'function' ) onError= function() {};
 
-    location= _fixLocation(location);
-    if ( !location ) return onError('Could get location');
+    param= _fixParam(param);
+    if ( !param ) return onError('Could get location');
 
     var locations;
-    if ( Array.isArray(location[0]) ) {
-        var spherewrap= false;
-        var ul= roundLocation(location[0]);
-        var or= roundLocation(location[1]);
-
-        if ( ul[0] * or[0] < 0 && Math.abs(ul[0] - or[0]) >= 180 ) {
-            spherewrap= true;
-            ul= mirrorPoint(ul);
-            or= mirrorPoint(or);
-        }
-
-        var lonMin= ul[0], lonMax= or[0];
-        if ( ul[0] > or[0] ) {
-            lonMin= or[0];
-            lonMax= ul[0];
-        }
-        var latMin= ul[1], latMax= or[1];
-        if ( ul[1] > or[1] ) {
-            latMin= or[1];
-            latMax= ul[1];
-        }
-
+    if ( param instanceof BoundingBox ) {
         locations= [];
 
+        var maxLng= param.maxLng();
+        var maxLat= param.maxLat();
+        var sphereWrap= param.sphereWrap();
+
         // boundingBox assumed -> build locations array
-        for ( var lon= lonMin; lon <= lonMax; lon += 1 / resolution ) {
-            for ( var lat= latMin; lat <= latMax; lat += 1 / resolution ) {
-                locations.push([ lon, lat ]);
+        for ( var lng= param.minLng(); lng <= maxLng; lng += resolutionStep ) {
+            for ( var lat= param.minLat(); lat <= maxLat; lat += resolutionStep ) {
+                locations.push([ sphereWrap ? _mirrorLng(lng) : lng, lat ]);
 
                 // prevent system from lock up due to allocate a lot of memory
                 if ( locations.length > pointLimit ) return onError('Too many points');
             }
         }
-        if ( spherewrap ) locations= mirrorPoints(locations);
     }
     else {
-        locations= [ roundLocation(location) ];
+        locations= [ param.lng(), param.lat() ];
     }
 
-    if ( !locations.length ) return onError('No location given');
 
     var altSum= 0;
     for ( var i in locations ) {
         var li= locations[i];
-        var fileEntry= dataFiles.findFile(roundLocation(li));
+        var fileEntry= dataFiles.findFile(li);
 
         if ( !fileEntry ) return onError('Could not determine data file');
 
@@ -190,7 +220,9 @@ var getElevation= function( location, onError ) {
 
 var init= function( config ) {
     var result= dataFiles.init(config);
+
     if ( result instanceof Error ) throw result;
+
     return result;
 };
 
