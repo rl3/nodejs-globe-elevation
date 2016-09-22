@@ -145,8 +145,8 @@ var _fixParam= (function() {
 
         if ( !Array.isArray(location) || location.length !== 2 ) return;
 
-        var p1= _fixSingleLocation(location[0]);
-        var p2= _fixSingleLocation(location[1]);
+        var p1= _fixSingleLocation(_resolveValue(location[0]));
+        var p2= _fixSingleLocation(_resolveValue(location[1]));
 
         if ( p1 && p2 ) return new BoundingBox(p1, p2);
     };
@@ -162,7 +162,7 @@ var _fixParam= (function() {
  *  returns result of onError or elevation
  */
 var _getElevation= function( param, onError ) {
-    if ( typeof onError !== 'function' ) onError= function() {};
+    if ( typeof onError !== 'function' ) onError= dataFile.stdOnError;
 
     param= _fixParam(param);
     if ( !param ) return onError('Could get location');

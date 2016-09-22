@@ -182,7 +182,7 @@ var readNumberFromFile= (function() {
     return function( name, position ) {
 
         return openFile(name, function( fd ) {
-            if ( fs.readSync(fd, buffer, 0, 2, position) !== 2 ) return null;
+            if ( fs.readSync(fd, buffer, 0, 2, position) !== 2 ) return new Error('Could not fetch value from file');
 
             var int16= buffer.readInt16LE(0);
 
@@ -198,9 +198,10 @@ var readNumberFromFile= (function() {
  *  returns undefined (or result of onError) on error
  *  returns elevation otherwise
  */
-var nop= function() {};
+var stdOnError= function( error ) { throw error; };
+
 var getElevation= function( lng, lat, onError ) {
-    if ( !onError ) onError= nop;
+    if ( !onError ) onError= stdOnError;
 
     var fileEntry= findFile(lng, lat);
 
@@ -208,7 +209,7 @@ var getElevation= function( lng, lat, onError ) {
 
     var result= readNumberFromFile(fileEntry.name, fileIndex(lng, lat, fileEntry, resolution));
 
-    if ( isNaN(result) ) return onError('Could not fetch value from file');
+    if ( result instanceof Error ) return onError(result);
 
     return result;
 };
@@ -218,6 +219,7 @@ module.exports= {
     init: init,
     getElevation: getElevation,
     getResolution: function() { return resolution; },
+    stdOnError: stdOnError,
     finalize: finalize
 };
 
