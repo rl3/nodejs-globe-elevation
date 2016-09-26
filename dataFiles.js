@@ -58,7 +58,8 @@ var openFile;
  * returns an Error if path does not exist
  */
 var _fixDataPath= function( _path ) {
-    if ( !_path.match(/^\//) ) {
+    // prepend path only if path does nit start with "/" and top level module is defined
+    if ( !_path.match(/^\//) && require.main ) {
         _path= path.join(path.dirname(require.main.filename), _path);
     }
 
