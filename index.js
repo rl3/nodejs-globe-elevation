@@ -162,7 +162,7 @@ var _fixParam= (function() {
  *  returns result of onError or elevation
  */
 var _getElevation= function( param, onError ) {
-    if ( typeof onError !== 'function' ) onError= dataFile.stdOnError;
+    if ( typeof onError !== 'function' ) onError= dataFiles.stdOnError;
 
     param= _fixParam(param);
     if ( !param ) return onError('Could get location');
